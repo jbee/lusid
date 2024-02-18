@@ -27,7 +27,7 @@ it is loaded from the `lusid.secret` system property or environment variable.
 * 🔧 Easy to create custom modes for specific target patterns
 * ⏨ integer numbers require less or as many characters as the number written in decimal
 * 🔢 Can generate an ID for multiple numbers
-* 📢 The character mapping can be public without compromising the number of secret
+* 📢 The character mapping can be public without compromising the number or secret
 * 💂 No amount of encoded IDs will help to disclose the original numbers or secret 
 
 ## API 
