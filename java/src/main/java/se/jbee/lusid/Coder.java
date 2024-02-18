@@ -2,7 +2,6 @@ package se.jbee.lusid;
 
 import static java.util.stream.IntStream.range;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
@@ -100,6 +99,13 @@ public interface Coder {
    */
   static Coder of(long secret, int minLength) {
     return of(secret, minLength, Mode.MIXED);
+  }
+
+  /**
+   * @see #of(long, int, Mode)
+   */
+  static Coder of(int minLength, Mode mode) {
+    return of(0L, minLength, mode);
   }
 
   /**
