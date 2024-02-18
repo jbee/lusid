@@ -2,7 +2,11 @@ package se.jbee.lusid;
 
 import static java.util.stream.IntStream.range;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.DoubleStream;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 /**
  * A {@linkplain Coder} is the combination of an encoder and a decoder with a chosen configuration.
@@ -183,6 +187,22 @@ public interface Coder {
     return Float.intBitsToFloat(decodeInt(id));
   }
 
+  default String encodeDoubles(double... values) {
+    return encodeLongs(DoubleStream.of(values).mapToLong(Double::doubleToRawLongBits).toArray());
+  }
+
+  default double[] decodeDoubles(String id) {
+    return LongStream.of(decodeLongs(id)).mapToDouble(Double::longBitsToDouble).toArray();
+  }
+
+  default String encodeInts(int... values) {
+    return encodeLongs(IntStream.of(values).mapToLong(v -> v).toArray());
+  }
+
+  default int[] decodeInts(String id) {
+    return LongStream.of(decodeLongs(id)).mapToInt(v -> (int) v).toArray();
+  }
+
   /*
   Standard Encodings
    */
@@ -251,6 +271,8 @@ public interface Coder {
         throw new IllegalArgumentException("Table must not contain the pad1 character");
       if (tables.stream().anyMatch(t -> t.indexOf(padN) >= 0))
         throw new IllegalArgumentException("Table must not contain the padN character");
+      if (IntStream.of(join, flip, pad1, padN).distinct().count() != 4)
+        throw new IllegalArgumentException("join, flip, pad1, padN must be different characters");
     }
   }
 }
