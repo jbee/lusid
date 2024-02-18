@@ -22,10 +22,27 @@ The secret is either passed to `Coder.of` or, when omitted (like above),
 it is loaded from the `lusid.secret` system property or environment variable. 
 
 ## Properties
-* 🆔 Generates unique IDs for any `long`, `int`, `double`, `float` number
+* 🆔 Generates unique IDs for any `long`, `int`, `double`, `float` numbers
 * 🗲 Low overhead, algorithm is fast and mostly allocation free
 * 🔧 Easy to create custom modes for specific target patterns
 * ⏨ integer numbers require less or as many characters as the number written in decimal
-* 🔢 Can generate IDs for multiple numbers
+* 🔢 Can generate an ID for multiple numbers
 * 📢 The character mapping can be public without compromising the number of secret
-* 💂 No amount of encoded IDs will disclose the original numbers or the secret used
+* 💂 No amount of encoded IDs will help to disclose the original numbers or secret 
+
+## API 
+Demo of all the `Coder` API methods
+```java
+Coder coder = Coder.of(8); // minimum 8 characters mixed case
+
+// single numbers
+long lvalue = coder.decodeLong(coder.encodeLong(42L)); // = 42
+int ivalue = coder.decodeInt(coder.encodeInt(13)); // = 13
+double dvalue = coder.decodeDouble(coder.encodeDouble(0.5d)); // = 0.5
+float fvalue = coder.decodeFloat(coder.encodeFloat(33.3f)); // = 33.3
+
+// multiple numbers
+long[] lvalues = coder.decodeLongs(coder.encodeLongs(1L,2L)); // = [1,2]
+int[] ivalues = coder.decodeInts(coder.encodeInts(3,6,9)); // = [3,6,9]
+double[] dvalues = coder.decodeDoubles(coder.encodeDoubles(0.5d,55.789d)); // = [0.5,55.789]
+```
