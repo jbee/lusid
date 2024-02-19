@@ -106,7 +106,7 @@ record Lusid(
    * <p>OBS! bit-flip is used over negation because there is a flipped value for any bit combination
    * but there is not a positive number for the largest negative number.
    */
-  private boolean isFlipPreferable(long value) {
+  private static boolean isFlipPreferable(long value) {
     if (value >= 0) return false;
     long flipped = ~value;
     return flipped <= MAX_19;
@@ -178,7 +178,7 @@ record Lusid(
 
   /** The minimum length required for data + flip symbols */
   private static int encodingMinLength(long value) {
-    if (value < 0) return 1 + encodingMinLength(~value);
+    if (isFlipPreferable(value)) return 1 + encodingMinLength(~value);
     int l = encodingDataLength(lowInt(value));
     if (highInt(value) == 0) return l;
     return encodingDataLength(highInt(value)) + l;

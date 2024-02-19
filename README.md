@@ -118,9 +118,11 @@ finally switches place with the character at index resulting from bit-count of v
 the ID target length.
 
 ### Flipping
-As negative numbers usually have leading 1s not leading zeros it is often preferable to do a bitwise flip and
+As negative numbers usually have leading 1s (not leading zeros) it is often preferable to do a bitwise flip and
 encode the flipped number instead. This always takes place before any of the above. If the number is flipped
-the `Mode.flip` marker character is prepended. So it is always the leftmost character for a single number.
+the `Mode.flip` marker character is prepended. After the encoding is done the marker is the also swapped to another
+position based on the bit-count of the original value (64 bit) module the ID length.
+If padding is available the flip bit takes one of the padding places. Otherwise, it is "extra".
 
 ### Joining
 When multiple numbers are encoded each number is encoded as described above.
