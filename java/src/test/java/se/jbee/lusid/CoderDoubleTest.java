@@ -22,7 +22,8 @@ class CoderDoubleTest {
     System.setProperty(Coder.SECRET_PROPERTY, "1234567");
   }
 
-  private static final List<Mode> MODES = List.of(Mode.MIXED, Mode.LOWER, Mode.UPPER, Mode.XSAFE);
+  private static final List<Mode> MODES =
+      List.of(Mode.MIXED, Mode.LOWER, Mode.UPPER, Mode.XSAFE, Mode.SHAPE);
 
   @ParameterizedTest
   @ValueSource(

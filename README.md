@@ -52,15 +52,15 @@ double[] dvalues = coder.decodeDoubles(coder.encodeDoubles(0.5d,55.789d)); // = 
 ## Modes
 The below table demonstrates IDs the different `Mode`s with minimum length 6:
 ```
- Value   MIXED   UPPER   LOWER   XSAFE
+ Value   MIXED   UPPER   LOWER   XSAFE   SHAPE
  
-      1  VGH5h8  HU5VJ8  54hjv8  VTjvJr
-     12  XU6r8k  R4XK86  6ukx8r  XgxKrk
-    123  k5eS8s  6VCO8S  rjn38f  kvCSrs
-   1234  r8NcsC  K8E1SC  x81efn  KrNcsC 
-  12345  8LW5uS  8W7VGO  87wjt3  rZlvGS
- 123456  5R9wZj  V69LW5  jr9z7h  vkhLZj
-1234567 GR2oSct U6PFO1T 4rds3eg TkpFSct
+      1  VGH5h8  HU5VJ8  54hjv8  VTjvJr  VtJ6Er
+     12  XU6r8k  R4XK86  6ukx8r  XgxKrk  XG7Wrk
+    123  k5eS8s  6VCO8S  rjn38f  kvCSrs  k6eSrs
+   1234  r8NcsC  K8E1SC  x81efn  KrNcsC  WrNcsC
+  12345  8LW5uS  8W7VGO  87wjt3  rZlvGS  rzL6AS
+ 123456  5R9wZj  V69LW5  jr9z7h  vkhLZj  6KhUZj
+1234567 GR2oSct U6PFO1T 4rds3eg TkpFSct tK3uSct
 ```
 
 ## Algorithm

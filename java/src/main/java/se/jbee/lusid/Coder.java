@@ -248,6 +248,12 @@ public interface Coder {
     public static final Mode XSAFE =
         new Mode('H', 'R', 'h', 'r', List.of("BCDFGJKL", "mnpstvxz", "bcdfgjkl", "MNPSTVXZ"));
 
+    public static final List<String> SHAPE_TABLES =
+        List.of("BCDFGJKL", "mnpstvxz", "bcdfgjkw", "MNPSTVXZ", "aeiuAEWU", "12345678");
+
+    /** only characters that cannot be confused easily when reading in sans-serif */
+    public static final Mode SHAPE = new Mode('H', 'R', 'h', 'r', SHAPE_TABLES);
+
     private static final List<String> MIXED_TABLES =
         List.of("BCDFGJKL", "mnpstvxz", "bcdfgjkl", "MNPSTVXZ", "aeiouhrw", "01234567", "AEIOUHRW");
 

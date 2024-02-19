@@ -20,7 +20,8 @@ class CoderLongTest {
     System.setProperty(Coder.SECRET_PROPERTY, "80000089");
   }
 
-  private static final List<Mode> MODES = List.of(Mode.MIXED, Mode.LOWER, Mode.UPPER, Mode.XSAFE);
+  private static final List<Mode> MODES =
+      List.of(Mode.MIXED, Mode.LOWER, Mode.UPPER, Mode.XSAFE, Mode.SHAPE);
 
   @ParameterizedTest
   @ValueSource(longs = {0, 1, 12, 123, 1234, 12345, 123456, 1234567, 12345678})

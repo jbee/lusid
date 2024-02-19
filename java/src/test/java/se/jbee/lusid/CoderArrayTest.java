@@ -1,12 +1,11 @@
 package se.jbee.lusid;
 
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.List;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests the array encode/decode method pairs.
@@ -25,7 +24,7 @@ class CoderArrayTest {
   }
 
   private static final List<Coder.Mode> MODES =
-      List.of(Coder.Mode.MIXED, Coder.Mode.LOWER, Coder.Mode.UPPER, Coder.Mode.XSAFE);
+      List.of(Coder.Mode.MIXED, Coder.Mode.LOWER, Coder.Mode.UPPER, Coder.Mode.XSAFE, Coder.Mode.SHAPE);
 
   @Test
   void testLongs() {

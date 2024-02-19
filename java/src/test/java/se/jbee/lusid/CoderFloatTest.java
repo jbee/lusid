@@ -20,7 +20,8 @@ class CoderFloatTest {
     System.setProperty(Coder.SECRET_PROPERTY, "-89632478");
   }
 
-  private static final List<Mode> MODES = List.of(Mode.MIXED, Mode.LOWER, Mode.UPPER, Mode.XSAFE);
+  private static final List<Mode> MODES =
+      List.of(Mode.MIXED, Mode.LOWER, Mode.UPPER, Mode.XSAFE, Mode.SHAPE);
 
   @ParameterizedTest
   @ValueSource(
