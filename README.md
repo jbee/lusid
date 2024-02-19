@@ -50,7 +50,17 @@ double[] dvalues = coder.decodeDoubles(coder.encodeDoubles(0.5d,55.789d)); // = 
 ```
 
 ## Modes
-The below table demonstrates IDs the different `Mode`s with minimum length 6:
+Five standard modes are included:
+
+* `MIXED`: uses upper and lower case letters and digits
+* `UPPER`: uses upper case letters and digits
+* `LOWER`: uses lower case letters and digits
+* `XSAFE`: uses upper and lower consonants and digits (safest when trying to avoid words)
+* `SHAPE`: uses upper and lower letters and digits that cannot be easily confused visually
+
+It is also easy to create further user defined modes.
+
+The below table demonstrates IDs using the different `Mode`s with minimum length 6:
 ```
  Value   MIXED   UPPER   LOWER   XSAFE   SHAPE
  
