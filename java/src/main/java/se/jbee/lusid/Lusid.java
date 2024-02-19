@@ -69,9 +69,32 @@ record Lusid(
   }
 
   private String encodeLong(long value, int minLength) {
-    return isFlipPreferable(value)
-        ? flip + encode(~value, minLength - 1)
-        : encode(value, minLength);
+    boolean doFlip = isFlipPreferable(value);
+    if (doFlip) value = ~value;
+    int lowValue = lowInt(value);
+    int highValue = highInt(value);
+    int offset = doFlip ? 1 : 0;
+    char[] id;
+    if (minLength <= 10 && highValue == 0) {
+      int dataLength = encodingDataLength(lowValue);
+      int length = max(minLength, dataLength);
+      int padLength = max(0, length - dataLength);
+      if (doFlip && padLength > 0) length--;
+      id = new char[offset + length];
+      encode(lowValue, lowInt(secret), id, offset, length, dataLength);
+    } else {
+      int dataLength = encodingDataLength(highValue) + 10;
+      int length = max(minLength, dataLength);
+      int padLength = max(0, length - dataLength);
+      if (doFlip && padLength > 0) length--;
+      id = new char[offset + length];
+      encode(lowValue, lowInt(secret), id, id.length - 10, 10, encodingDataLength(lowValue));
+      encode(highValue, highInt(secret), id, offset, length - 10, encodingDataLength(highValue));
+    }
+    if (doFlip) {
+      id[0] = flip;
+    }
+    return new String(id);
   }
 
   /**
@@ -86,14 +109,6 @@ record Lusid(
     if (value >= 0) return false;
     long flipped = ~value;
     return flipped <= MAX_19;
-  }
-
-  private String encode(long value, int length) {
-    boolean lowOnly = length <= 10 && highInt(value) == 0;
-    char[] low = encode(lowInt(value), lowInt(secret), lowOnly ? length : 10);
-    if (lowOnly) return new String(low);
-    char[] high = encode(highInt(value), highInt(secret), max(1, min(10, length - 10)));
-    return new String(high) + new String(low);
   }
 
   @Override
@@ -118,9 +133,7 @@ record Lusid(
   }
 
   private long decodeLong(char[] id, int offset, int length) {
-    return id[0] == flip
-        ? ~decode(id, offset + 1, length - 1)
-        : decode(id, offset, length);
+    return id[0] == flip ? ~decode(id, offset + 1, length - 1) : decode(id, offset, length);
   }
 
   private long decode(char[] id, int offset, int length) {
@@ -131,50 +144,43 @@ record Lusid(
     return (high << 32) | low;
   }
 
-  private char[] encode(int value, int secret, int minLength) {
-    int dataLength = encodingDataLength(value);
-    int padLength = Math.max(0, minLength - dataLength);
-    int length = max(dataLength, minLength);
-    char[] id = new char[length];
+  private void encode(int value, int secret, char[] id, int offset, int length, int dataLength) {
+    int padLength = max(0, length - dataLength);
     final int secVal = value ^ secret;
     int tableOffset = secVal & 0b11; // lowest 2 bits are start table offset
     int tableCount = tables.size();
-    int idIndex = id.length - 1;
+    int idIndex = offset + length - 1;
     // encode data backed characters
     for (int i = 0; i < dataLength; i++)
       id[idIndex--] = tables.get(tableOffset++ % tableCount)[(secVal >>> (2 + (3 * i))) & 0b111];
-    if (padLength == 0) return id;
+    if (padLength == 0) return;
     // encode padding
     if (padLength == 1) {
-      id[0] = pad1;
+      id[offset] = pad1;
     } else {
       for (int i = 0; i < padLength - 2; i++) {
         int padVal = secVal >>> (2 + (3 * i) % dataLength);
         id[idIndex--] = tables.get(tableOffset++ % tableCount)[padVal & 0b111];
       }
       int padSecret = (secret >>> (2 + 3 * (length - 1))) & 0b111;
-      id[1] =
-          tables
-              .get(tableOffset % tableCount)[
-              padSecret ^ (padLength - 2)]; // 2: the pad indicator and the pad length
-      id[0] = padN;
+      // 2: the pad indicator and the pad length
+      id[offset + 1] = tables.get(tableOffset % tableCount)[padSecret ^ (padLength - 2)];
+      id[offset] = padN;
     }
     // swap pad marker to a different position
-    int padIndex = Long.bitCount(secVal) % id.length;
-    char tmp = id[0];
-    id[0] = id[padIndex];
-    id[padIndex] = tmp;
-    return id;
+    int padIndex = offset + Long.bitCount(secVal) % length;
+    swap(id, offset, padIndex);
   }
 
-  /** The minimum length required for data + sign symbols */
+  /** The minimum length required for data + flip symbols */
   private static int encodingMinLength(long value) {
-    if (value < 0) return 1 + encodingMinLength(-value);
+    if (value < 0) return 1 + encodingMinLength(~value);
     int l = encodingDataLength(lowInt(value));
     if (highInt(value) == 0) return l;
     return encodingDataLength(highInt(value)) + l;
   }
 
+  /** The minimum length required to encode the value */
   private static int encodingDataLength(int value) {
     int zeroBits = Integer.numberOfLeadingZeros(value);
     int dataBits = 32 - zeroBits - 2;
@@ -191,9 +197,7 @@ record Lusid(
     int padIndex = decodePadIndex(id, offset, length);
     if (padIndex >= 0) {
       // un-swap
-      char tmp = id[offset];
-      id[offset] = id[padIndex];
-      id[padIndex] = tmp;
+      swap(id, offset, padIndex);
 
       // offset of the left most symbol must be found
       tableOffset0 = decodeTableOffset(id, offset, length);
@@ -257,6 +261,12 @@ record Lusid(
 
   private boolean isPadSymbol(char s) {
     return pad1 == s || padN == s;
+  }
+
+  private void swap(char[] id, int i1, int i2) {
+    char tmp = id[i1];
+    id[i1] = id[i2];
+    id[i2] = tmp;
   }
 
   /** Makes sure the secret has a good mix of 1 and 0 throughout the 64 bits. */

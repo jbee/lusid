@@ -46,6 +46,11 @@ class CoderLongTest {
     assertEncodesInLength(8, 20, Long.MAX_VALUE);
   }
 
+  @Test
+  void testLong8_Negative() {
+    assertEncodesInLength(8, 8, -1);
+  }
+
   @ParameterizedTest
   @ValueSource(longs = {-0, -1, -12, -123, -1234, -12345, -123456, -1234567})
   void testLong8_Negative(long value) {
