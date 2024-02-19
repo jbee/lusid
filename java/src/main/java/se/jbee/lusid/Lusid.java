@@ -70,8 +70,8 @@ record Lusid(
 
   private String encodeLong(long value, int minLength) {
     return isFlipPreferable(value)
-        ? flip + encodeLongNonNeg(~value, minLength - 1)
-        : encodeLongNonNeg(value, minLength);
+        ? flip + encode(~value, minLength - 1)
+        : encode(value, minLength);
   }
 
   /**
@@ -88,7 +88,7 @@ record Lusid(
     return flipped <= MAX_19;
   }
 
-  private String encodeLongNonNeg(long value, int length) {
+  private String encode(long value, int length) {
     boolean lowOnly = length <= 10 && highInt(value) == 0;
     char[] low = encode(lowInt(value), lowInt(secret), lowOnly ? length : 10);
     if (lowOnly) return new String(low);
@@ -119,11 +119,11 @@ record Lusid(
 
   private long decodeLong(char[] id, int offset, int length) {
     return id[0] == flip
-        ? ~decodeLongNonNeg(id, offset + 1, length - 1)
-        : decodeLongNonNeg(id, offset, length);
+        ? ~decode(id, offset + 1, length - 1)
+        : decode(id, offset, length);
   }
 
-  private long decodeLongNonNeg(char[] id, int offset, int length) {
+  private long decode(char[] id, int offset, int length) {
     if (length <= 10) return decode(id, offset, length, lowInt(secret));
     int highLength = length - 10;
     long high = decode(id, offset, highLength, highInt(secret));
