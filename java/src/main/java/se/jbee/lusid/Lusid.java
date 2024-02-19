@@ -93,6 +93,7 @@ record Lusid(
     }
     if (doFlip) {
       id[0] = flip;
+      swap(id, 0, Long.bitCount(value) % id.length);
     }
     return new String(id);
   }
@@ -133,7 +134,10 @@ record Lusid(
   }
 
   private long decodeLong(char[] id, int offset, int length) {
-    return id[0] == flip ? ~decode(id, offset + 1, length - 1) : decode(id, offset, length);
+    int flipIndex = decodeFlipIndex(id, offset, length);
+    if (flipIndex < 0) return decode(id, offset, length);
+    swap(id, offset, flipIndex);
+    return ~decode(id, offset + 1, length - 1);
   }
 
   private long decode(char[] id, int offset, int length) {
@@ -245,6 +249,11 @@ record Lusid(
 
   private int decodePadIndex(char[] id, int offset, int length) {
     for (int i = 0; i < length; i++) if (isPadSymbol(id[offset + i])) return offset + i;
+    return -1;
+  }
+
+  private int decodeFlipIndex(char[] id, int offset, int length) {
+    for (int i = 0; i < length; i++) if (id[offset + i] == flip) return offset + i;
     return -1;
   }
 
