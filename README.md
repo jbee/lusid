@@ -85,12 +85,13 @@ Tables are cycled through right to left starting with the offset given by the lo
 Therefore, there must be at least 4 tables to cycle through. 
 Here we assume 4 tables being used.
 
+### Padding
+
 If the resulting character sequence is shorter than the target minimum length
 padding is added on the left. For a single missing character the `Mode.pad1` is added.
 For 2 or more missing characters `Mode.padN` is added left most followed by
 the number of additional padding bytes left to the 2nd length encoding character.
 
-### Padding
 Assuming the example from above should be padded to different minimum length, again using `Mode.UPPER`.
 
 ```
