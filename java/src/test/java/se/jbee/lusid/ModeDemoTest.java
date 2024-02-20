@@ -31,16 +31,15 @@ class ModeDemoTest {
                   upper.encodeLong(v),
                   lower.encodeLong(v),
                   xsafe.encodeLong(v),
-                  shape.encodeLong(v)
-              ));
+                  shape.encodeLong(v)));
     }
     assertEquals(
         """
-              1  VGH5h8  HU5VJ8  54hjv8  VTjvJr  VtJ6Er
-             12  XU6r8k  R4XK86  6ukx8r  XgxKrk  XG7Wrk
-            123  k5eS8s  6VCO8S  rjn38f  kvCSrs  k6eSrs
-           1234  r8NcsC  K8E1SC  x81efn  KrNcsC  WrNcsC
-          12345  8LW5uS  8W7VGO  87wjt3  rZlvGS  rzL6AS
+              1  VJH5h8  HH5VJ8  55hjv8  VVjvJr  VvJ6Er
+             12  XH6r8k  R5XK86  6hkx8r  XjxKrk  XJ7Wrk
+            123  k4eS8s  6TCO8S  rgn38f  ktCSrs  k5eSrs
+           1234  w8NcsC  L8E1SC  z81efn  LrNcsC  UrNcsC
+          12345  8KW5uS  8R7VGO  86wjt3  rXlvGS  rxL6AS
          123456  5R9wZj  V69LW5  jr9z7h  vkhLZj  6KhUZj
         1234567 GR2oSct U6PFO1T 4rds3eg TkpFSct tK3uSct
         """,

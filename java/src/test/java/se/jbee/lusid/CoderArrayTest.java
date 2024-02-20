@@ -24,7 +24,8 @@ class CoderArrayTest {
   }
 
   private static final List<Coder.Mode> MODES =
-      List.of(Coder.Mode.MIXED, Coder.Mode.LOWER, Coder.Mode.UPPER, Coder.Mode.XSAFE, Coder.Mode.SHAPE);
+      List.of(
+          Coder.Mode.MIXED, Coder.Mode.LOWER, Coder.Mode.UPPER, Coder.Mode.XSAFE, Coder.Mode.SHAPE);
 
   @Test
   void testLongs() {

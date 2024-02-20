@@ -24,21 +24,70 @@ record Lusid(long secret, int minLength, char join, char flip, char pad1, char p
   /** The largest positive number that can be expressed in 19 characters. */
   private static final long MAX_19 = ~((1L << 63) | (1L << 62) | (1L << 61));
 
-  static Coder coder(long secret, int minLength, Mode mode) {
+  static Coder coder(long secret, String secretProperty, int minLength, Mode mode) {
     minLength = max(1, min(20, minLength));
-    if (secret == 0L) secret = parseSecretProperty();
+    if (secret == 0L) secret = parseSecretProperty(secretProperty);
     secret = secretEnhance(secret);
     char[] tables = mode.tables().stream().limit(13).collect(joining()).toCharArray();
     return new Lusid(secret, minLength, mode.join(), mode.flip(), mode.pad1(), mode.padN(), tables);
   }
 
-  private static long parseSecretProperty() {
-    String secretStr = System.getProperty(SECRET_PROPERTY, System.getenv(SECRET_PROPERTY));
+  private static long parseSecretProperty(String secretProperty) {
+    String secretStr = System.getProperty(secretProperty, System.getenv(secretProperty));
     if (secretStr == null || secretStr.isEmpty())
       throw new IllegalArgumentException(
           "Secret must be defined for system property or environment variable named: "
-              + SECRET_PROPERTY);
+              + secretProperty);
     return parseLong(secretStr);
+  }
+
+  @Override
+  public String encodeName(String value) {
+    if (value.isEmpty()) return "";
+    int dataLength = value.length();
+    int length = max(min(minLength, dataLength +9), dataLength);
+    int padLength = length - dataLength;
+    char[] id = new char[length];
+    long s = secret;
+    char c = value.charAt(0);
+    checkNameLetter(c, 0);
+    encode(c-'@', (int)s, id, 0, padLength+1, 1);
+    for (int i = 1; i < dataLength; i++) {
+      s = Long.rotateRight(s, 5);
+      c = value.charAt(i);
+      checkNameLetter(c, i);
+      encode(c-'@', (int)s & 0b11111, id, padLength+i, 1, 1);
+    }
+    return new String(id);
+  }
+
+  @Override
+  public String decodeName(String id) {
+    if (id.isEmpty()) return  "";
+    char[] src = id.toCharArray();
+    int padIndex = decodePadIndex(src, 0, src.length);
+    int padLength = 0;
+    if (padIndex >= 0) {
+      swap(src, 0, padIndex);
+      padLength = src[0] == pad1 ? 1 : 2 + (decodeNamePadLength(src[1]) ^ ((int)secret & 0b111));
+    }
+    int dataLength = src.length - padLength;
+    char[] name = new char[dataLength];
+    long s = secret;
+    for (int i = 0; i < name.length; i++) {
+      name[i] = (char) (decode(src, padLength + i, 1, (int)s & 0b11111) + '@');
+      s = Long.rotateRight(s, 5);
+    }
+    return new String(name);
+  }
+
+  /**
+   * For a name it cannot be derived from the table offset which table was used to encode the
+   * padding length so all tables need to be searched.
+   */
+  private int decodeNamePadLength(char padEncoded) {
+    for (int i = 0; i < tables.length; i++) if (tables[i] == padEncoded) return i % 8;
+    throw new IllegalArgumentException("Illegal padding length character: " + padEncoded);
   }
 
   @Override
@@ -164,7 +213,7 @@ record Lusid(long secret, int minLength, char join, char flip, char pad1, char p
         int padVal = secVal >>> (2 + (3 * i) % dataLength);
         id[idIndex--] = tables[8 * (tableNr++ % tableCount) + (padVal & 0b111)];
       }
-      int padSecret = (secret >>> (2 + 3 * (length - 1))) & 0b111;
+      int padSecret = secret & 0b111;
       // 2: the pad indicator and the pad length
       id[offset + 1] = tables[8 * (tableNr % tableCount) + (padSecret ^ (padLength - 2))];
       id[offset] = padN;
@@ -209,7 +258,7 @@ record Lusid(long secret, int minLength, char join, char flip, char pad1, char p
         offset++;
         length--;
       } else {
-        int padSecret = (secret >>> (2 + 3 * (length - 1))) & 0b111;
+        int padSecret = secret & 0b111;
         int padEncoded =
             decodeTableIndex(tables, ((tableNr0 + length - 2) % tableCount), id[offset + 1]);
         int padLength = (padSecret ^ padEncoded) + 2; // 2: the pad indicator and the pad length
@@ -304,5 +353,10 @@ record Lusid(long secret, int minLength, char join, char flip, char pad1, char p
 
   private static int highInt(long value) {
     return (int) (value >>> 32);
+  }
+
+  private static void checkNameLetter(char c, int i) {
+    if ((c < 'A' || c > 'Z') && c != '_')
+      throw new IllegalArgumentException("Not a name character: %s at index %d".formatted(c, i));
   }
 }

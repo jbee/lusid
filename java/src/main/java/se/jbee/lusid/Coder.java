@@ -116,7 +116,19 @@ public interface Coder {
    * @return an instance with the specified behaviour
    */
   static Coder of(long secret, int minLength, Mode mode) {
-    return Lusid.coder(secret, minLength, mode);
+    return Lusid.coder(secret, Coder.SECRET_PROPERTY, minLength, mode);
+  }
+
+  /**
+   * @param secretProperty name of the system property or environment variable that is used as
+   *     secret number
+   * @param minLength target minimum length for generated ID strings; 1-20, any value outside the
+   *     bounds is limited to the closest limit
+   * @param mode configuration for the characters used to encode/decode bits with
+   * @return an instance with the specified behaviour
+   */
+  static Coder of(String secretProperty, int minLength, Mode mode) {
+    return Lusid.coder(0L, Coder.SECRET_PROPERTY, minLength, mode);
   }
 
   /*
@@ -144,6 +156,19 @@ public interface Coder {
   String encodeLongs(long... values);
 
   long[] decodeLongs(String id);
+
+  /**
+   * The resulting ID is always as long as the input value (or longer when padded to minimum
+   * length). At lost it can be 9 characters longer than the input.
+   *
+   * @param value for example an enum constant name
+   * @return the encoded ID for the given name
+   * @throws IllegalArgumentException in case the given value has characters other than upper case
+   *     ASCII letters and the underscore symbol
+   */
+  String encodeName(String value);
+
+  String decodeName(String id);
 
   /*
   Convenience De/Encoding API
