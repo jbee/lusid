@@ -95,7 +95,7 @@ Tables are cycled through right to left starting with the offset given by the lo
 Therefore, there must be at least 4 tables to cycle through. 
 Here we assume 4 tables being used.
 
-### Padding
+#### Padding
 
 If the resulting character sequence is shorter than the target minimum length
 padding is added on the left. For a single missing character the `Mode.pad1` is added.
@@ -127,14 +127,14 @@ To not always lead padded IDs with the padding indicator (`Mode.pad1` or `Mode.p
 finally switches place with the character at index resulting from bit-count of value XOR secret (full 32bit) modulo
 the ID target length.
 
-### Flipping
+#### Flipping
 As negative numbers usually have leading 1s (not leading zeros) it is often preferable to do a bitwise flip and
 encode the flipped number instead. This always takes place before any of the above. If the number is flipped
 the `Mode.flip` marker character is prepended. After the encoding is done the marker is the also swapped to another
 position based on the bit-count of the original value (64 bit) module the ID length.
 If padding is available the flip bit takes one of the padding places. Otherwise, it is "extra".
 
-### Joining
+#### Joining
 When multiple numbers are encoded each number is encoded as described above.
 The parts are then joined (or seperated) by the `Mode.join` character.
 The padding to reach the target length is equally distributed on the individual numbers.

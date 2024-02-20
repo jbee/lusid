@@ -3,8 +3,7 @@ package se.jbee.lusid;
 import static java.lang.Long.parseLong;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
-
-import java.util.List;
+import static java.util.stream.Collectors.joining;
 
 /**
  * Implementation of the <i>Locally Unique Short Identifier</i> encoder/decoder algorithm.
@@ -16,11 +15,10 @@ import java.util.List;
  * @param flip character used to indicate a bit flipped value (encoded as marker + flipped number)
  * @param pad1 character used to fill a single padding character
  * @param padN character used to indicate multiple filler characters
- * @param tables encoding tables used, each must have 8 unique characters, at least 4 tables are
- *     required, tables are used in order left to right
+ * @param tables encoding tables used, all {@link Mode#tables()} are collapsed to a single lookup
+ *     table
  */
-record Lusid(
-    long secret, int minLength, char join, char flip, char pad1, char padN, List<char[]> tables)
+record Lusid(long secret, int minLength, char join, char flip, char pad1, char padN, char[] tables)
     implements Coder {
 
   /** The largest positive number that can be expressed in 19 characters. */
@@ -30,7 +28,7 @@ record Lusid(
     minLength = max(1, min(20, minLength));
     if (secret == 0L) secret = parseSecretProperty();
     secret = secretEnhance(secret);
-    List<char[]> tables = mode.tables().stream().limit(13).map(String::toCharArray).toList();
+    char[] tables = mode.tables().stream().limit(13).collect(joining()).toCharArray();
     return new Lusid(secret, minLength, mode.join(), mode.flip(), mode.pad1(), mode.padN(), tables);
   }
 
@@ -151,12 +149,12 @@ record Lusid(
   private void encode(int value, int secret, char[] id, int offset, int length, int dataLength) {
     int padLength = max(0, length - dataLength);
     final int secVal = value ^ secret;
-    int tableOffset = secVal & 0b11; // lowest 2 bits are start table offset
-    int tableCount = tables.size();
+    int tableNr = secVal & 0b11; // lowest 2 bits are start table offset
+    int tableCount = tables.length / 8;
     int idIndex = offset + length - 1;
     // encode data backed characters
     for (int i = 0; i < dataLength; i++)
-      id[idIndex--] = tables.get(tableOffset++ % tableCount)[(secVal >>> (2 + (3 * i))) & 0b111];
+      id[idIndex--] = tables[8 * (tableNr++ % tableCount) + ((secVal >>> (2 + (3 * i))) & 0b111)];
     if (padLength == 0) return;
     // encode padding
     if (padLength == 1) {
@@ -164,11 +162,11 @@ record Lusid(
     } else {
       for (int i = 0; i < padLength - 2; i++) {
         int padVal = secVal >>> (2 + (3 * i) % dataLength);
-        id[idIndex--] = tables.get(tableOffset++ % tableCount)[padVal & 0b111];
+        id[idIndex--] = tables[8 * (tableNr++ % tableCount) + (padVal & 0b111)];
       }
       int padSecret = (secret >>> (2 + 3 * (length - 1))) & 0b111;
       // 2: the pad indicator and the pad length
-      id[offset + 1] = tables.get(tableOffset % tableCount)[padSecret ^ (padLength - 2)];
+      id[offset + 1] = tables[8 * (tableNr % tableCount) + (padSecret ^ (padLength - 2))];
       id[offset] = padN;
     }
     // swap pad marker to a different position
@@ -194,8 +192,8 @@ record Lusid(
   }
 
   private long decode(char[] id, int offset, int length, int secret) {
-    int tableOffset0;
-    int tableCount = tables.size();
+    int tableNr0;
+    int tableCount = tables.length / 8;
 
     // was there padding?
     int padIndex = decodePadIndex(id, offset, length);
@@ -204,7 +202,7 @@ record Lusid(
       swap(id, offset, padIndex);
 
       // offset of the left most symbol must be found
-      tableOffset0 = decodeTableOffset(id, offset, length);
+      tableNr0 = decodeTableOffset(id, offset, length);
 
       // pad length?
       if (pad1 == id[offset]) {
@@ -213,13 +211,13 @@ record Lusid(
       } else {
         int padSecret = (secret >>> (2 + 3 * (length - 1))) & 0b111;
         int padEncoded =
-            decodeTableIndex(tables.get((tableOffset0 + length - 2) % tableCount), id[offset + 1]);
+            decodeTableIndex(tables, ((tableNr0 + length - 2) % tableCount), id[offset + 1]);
         int padLength = (padSecret ^ padEncoded) + 2; // 2: the pad indicator and the pad length
         offset += padLength;
         length -= padLength;
       }
     } else {
-      tableOffset0 = decodeTableOffset(id, offset, length);
+      tableNr0 = decodeTableOffset(id, offset, length);
     }
     // decoding the data symbols
     // OBS! must be long because we might set the highest int bit, and we don't want negative
@@ -229,20 +227,22 @@ record Lusid(
       if (i > 0) value <<= 3;
       int tripletSecret = (secret >>> (2 + 3 * (length - 1 - i))) & 0b111;
       int tripletEncoded =
-          decodeTableIndex(
-              tables.get((tableOffset0 + length - 1 - i) % tableCount), id[offset + i]);
+          decodeTableIndex(tables, ((tableNr0 + length - 1 - i) % tableCount), id[offset + i]);
       value |= tripletSecret ^ tripletEncoded;
     }
     // restoring lowest 2bits from table offset
     value <<= 2;
-    value |= (tableOffset0 ^ secret) & 0b11;
+    value |= (tableNr0 ^ secret) & 0b11;
     return value;
   }
 
+  /**
+   * @return the table used first when encoding
+   */
   private int decodeTableOffset(char[] id, int offset, int length) {
     int i0 = offset + length - 1;
     char s0 = id[i0];
-    for (int i = 0; i < 4; i++) if (isTableSymbol(tables.get(i), s0)) return i;
+    for (int i = 0; i < 32; i++) if (tables[i] == s0) return i / 8;
     throw new IllegalArgumentException(
         "Unexpected offset: `%s` (at %d in %s)".formatted(s0, i0, new String(id)));
   }
@@ -257,15 +257,10 @@ record Lusid(
     return -1;
   }
 
-  private static int decodeTableIndex(char[] table, char s) {
-    for (int i = 0; i < table.length; i++) if (table[i] == s) return i;
+  private static int decodeTableIndex(char[] table, int tableNo, char s) {
+    for (int i = 0; i < 8; i++) if (table[8 * tableNo + i] == s) return i;
     throw new IllegalArgumentException(
         "Unexpected symbol: `%s` (expected one of %s)".formatted(s, new String(table)));
-  }
-
-  private static boolean isTableSymbol(char[] table, char s) {
-    for (char c : table) if (c == s) return true;
-    return false;
   }
 
   private boolean isPadSymbol(char s) {
