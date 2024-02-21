@@ -18,8 +18,9 @@ class CoderNameTest {
   @Test
   void testName() {
     Coder coder = Coder.of(67L, 9);
-    String actual = "HELLO_WORLD";
-    for (int i = 1; i < actual.length(); i++) assertName(coder, max(9, i), actual.substring(0, i));
+    String expected = "HELLO_WORLD";
+    for (int i = 1; i < expected.length(); i++)
+      assertName(coder, max(9, i), expected.substring(0, i));
   }
 
   @Test
@@ -36,9 +37,9 @@ class CoderNameTest {
     assertEquals("Not a name character: o at index 1", ex.getMessage());
   }
 
-  private void assertName(Coder coder, int expectedLength, String name) {
-    String id = coder.encodeName(name);
+  private void assertName(Coder coder, int expectedLength, String expected) {
+    String id = coder.encodeName(expected);
     assertEquals(expectedLength, id.length());
-    assertEquals(name, coder.decodeName(id));
+    assertEquals(expected, coder.decodeName(id));
   }
 }

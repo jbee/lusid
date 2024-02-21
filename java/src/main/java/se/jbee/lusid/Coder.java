@@ -128,7 +128,7 @@ public interface Coder {
    * @return an instance with the specified behaviour
    */
   static Coder of(String secretProperty, int minLength, Mode mode) {
-    return Lusid.coder(0L, Coder.SECRET_PROPERTY, minLength, mode);
+    return Lusid.coder(0L, secretProperty, minLength, mode);
   }
 
   /*
@@ -153,13 +153,21 @@ public interface Coder {
    */
   long decodeLong(String id);
 
+  /**
+   * Encodes each value using {@link #encodeLong(long)} and joins the results with {@link
+   * Mode#join()}. The minimum length applies to the entire resulting ID, potential padding is
+   * distributed evenly to the individual numbers joined.
+   *
+   * @param values a list of arbitrary long values
+   * @return An ID representing the values
+   */
   String encodeLongs(long... values);
 
   long[] decodeLongs(String id);
 
   /**
-   * The resulting ID is always as long as the input value (or longer when padded to minimum
-   * length). At lost it can be 9 characters longer than the input.
+   * The resulting ID is always 1 character per input character. Padding can be at most 9 additional
+   * characters.
    *
    * @param value for example an enum constant name
    * @return the encoded ID for the given name
@@ -169,6 +177,17 @@ public interface Coder {
   String encodeName(String value);
 
   String decodeName(String id);
+
+  /**
+   * The resulting ID always uses 2 characters per input UTF-8 byte. Padding can be at most 9
+   * additional characters.
+   *
+   * @param value any string
+   * @return the encoded ID for the string
+   */
+  String encodeText(String value);
+
+  String decodeText(String id);
 
   /*
   Convenience De/Encoding API

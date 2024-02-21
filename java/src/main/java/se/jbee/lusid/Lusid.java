@@ -3,7 +3,13 @@ package se.jbee.lusid;
 import static java.lang.Long.parseLong;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.IntStream.range;
+
+import java.util.PrimitiveIterator;
+import java.util.function.LongToIntFunction;
+import java.util.stream.IntStream;
 
 /**
  * Implementation of the <i>Locally Unique Short Identifier</i> encoder/decoder algorithm.
@@ -44,41 +50,67 @@ record Lusid(long secret, int minLength, char join, char flip, char pad1, char p
   @Override
   public String encodeName(String value) {
     if (value.isEmpty()) return "";
-    int dataLength = value.length();
-    int length = max(min(minLength, dataLength +9), dataLength);
+    for (int i = 0; i < value.length(); i++) checkNameLetter(value.charAt(i), i);
+    return encodeUnits(1, value.length(), value.chars().map(c -> c - '@'));
+  }
+
+  @Override
+  public String encodeText(String value) {
+    if (value.isEmpty()) return "";
+    byte[] bytes = value.getBytes(UTF_8);
+    return encodeUnits(
+        2, bytes.length, range(0, bytes.length).map(i -> Byte.toUnsignedInt(bytes[i])));
+  }
+
+  private String encodeUnits(int unitLength, int unitCount, IntStream units) {
+    int dataLength = unitLength * unitCount;
+    int length = max(min(minLength, dataLength + 9), dataLength);
     int padLength = length - dataLength;
     char[] id = new char[length];
-    long s = secret;
-    char c = value.charAt(0);
-    checkNameLetter(c, 0);
-    encode(c-'@', (int)s, id, 0, padLength+1, 1);
-    for (int i = 1; i < dataLength; i++) {
-      s = Long.rotateRight(s, 5);
-      c = value.charAt(i);
-      checkNameLetter(c, i);
-      encode(c-'@', (int)s & 0b11111, id, padLength+i, 1, 1);
+    long rotSec = secret;
+    PrimitiveIterator.OfInt iter = units.iterator();
+    encode(iter.nextInt(), (int) rotSec, id, 0, padLength + unitLength, unitLength);
+    for (int i = 1; i < unitCount; i++) {
+      rotSec = Long.rotateRight(rotSec, 2 + (3 * unitLength));
+      encode(iter.nextInt(), (int) rotSec, id, padLength + (i * unitLength), unitLength, unitLength);
     }
     return new String(id);
   }
 
   @Override
   public String decodeName(String id) {
-    if (id.isEmpty()) return  "";
+    if (id.isEmpty()) return "";
+    int[] chars = decodeUnits(id, 1, v -> (int) (v + '@'));
+    return new String(chars, 0, chars.length);
+  }
+
+  @Override
+  public String decodeText(String id) {
+    if (id.isEmpty()) return "";
+    int[] bytes = decodeUnits(id, 2, v -> (int) v);
+    byte[] utf8 = new byte[bytes.length];
+    for (int i = 0; i < utf8.length; i++) utf8[i] = (byte) (bytes[i] & 0xFF);
+    return new String(utf8, UTF_8);
+  }
+
+  private int[] decodeUnits(String id, int unitLength, LongToIntFunction toCodePoint) {
     char[] src = id.toCharArray();
     int padIndex = decodePadIndex(src, 0, src.length);
     int padLength = 0;
     if (padIndex >= 0) {
       swap(src, 0, padIndex);
-      padLength = src[0] == pad1 ? 1 : 2 + (decodeNamePadLength(src[1]) ^ ((int)secret & 0b111));
+      padLength = src[0] == pad1 ? 1 : 2 + (decodeNamePadLength(src[1]) ^ ((int) secret & 0b111));
     }
     int dataLength = src.length - padLength;
-    char[] name = new char[dataLength];
-    long s = secret;
-    for (int i = 0; i < name.length; i++) {
-      name[i] = (char) (decode(src, padLength + i, 1, (int)s & 0b11111) + '@');
-      s = Long.rotateRight(s, 5);
+    int unitCount = dataLength / unitLength;
+    int[] value = new int[unitCount];
+    long rotSec = secret;
+    for (int i = 0; i < unitCount; i++) {
+      long unitValue = decode(src, padLength + (i * unitLength), unitLength, (int) rotSec);
+      value[i] = toCodePoint.applyAsInt(unitValue);
+      rotSec = Long.rotateRight(rotSec, 2 + (3 * unitLength));
     }
-    return new String(name);
+    return value;
   }
 
   /**
@@ -92,20 +124,21 @@ record Lusid(long secret, int minLength, char join, char flip, char pad1, char p
 
   @Override
   public String encodeLongs(long... values) {
-    if (values.length == 0) return "";
-    if (values.length == 1) return encodeLong(values[0]);
+    int count = values.length;
+    if (count == 0) return "";
+    if (count == 1) return encodeLong(values[0]);
     int dataLength = 0;
     for (long v : values) dataLength += encodingMinLength(v);
-    dataLength += values.length - 1; // for the join characters
+    dataLength += count - 1; // for the join characters
     int padAvgLength = 0;
     int padLength0 = 0;
     if (dataLength < minLength) {
-      padAvgLength = (minLength - dataLength) / values.length;
-      padLength0 = ((minLength - dataLength) % values.length) + padAvgLength;
+      padAvgLength = (minLength - dataLength) / count;
+      padLength0 = ((minLength - dataLength) % count) + padAvgLength;
     }
     StringBuilder id = new StringBuilder(max(minLength, dataLength));
     id.append(encodeLong(values[0], padLength0 + encodingMinLength(values[0])));
-    for (int i = 1; i < values.length; i++)
+    for (int i = 1; i < count; i++)
       id.append(join).append(encodeLong(values[i], padAvgLength + encodingMinLength(values[i])));
     return id.toString();
   }

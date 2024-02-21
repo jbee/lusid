@@ -12,8 +12,8 @@ Encoding and decoding is done via a `Coder` instance
 
 ```java
 Coder coder = Coder.of(6, Mode.MIXED); // 6 characters, upper and lower case
-String id = coder.encodeLong(42L); // = lR7wZ8 (depends on secret)
-long value = coder.decodeLong(id); // = 42
+String id = coder.encodeLong(42L);     // = "lR7wZ8" (depends on secret)
+long value = coder.decodeLong(id);     // = 42
 ```
 
 A `Coder` has three configuration properties
@@ -21,9 +21,9 @@ A `Coder` has three configuration properties
 * a `Mode` (a configuration of the used characters)
 * a 64 bit secret
 
-The secret is either passed to `Coder.of` or, when omitted (like above), 
+The secret is either passed to directly to `Coder.of` or, when omitted (like above), 
 it is loaded from the `lusid.secret` system property or environment variable.
-The name of an alternative property can also be used.
+The name of an alternative property can also be passed as argument.
 
 ## Properties
 * 🆔 Generates unique IDs for any `long`, `int`, `double`, `float` number(s)
@@ -37,25 +37,44 @@ The name of an alternative property can also be used.
 * 🛡️ No amount of encoded IDs will help to disclose the original numbers or secret 
  
 
-## ⛖ API 
-Demo of all the `Coder` API methods
+## API 
+The `Coder` API methods to encode and decode different types of values:
 ```java
 Coder coder = Coder.of(8); // minimum 8 characters mixed case
 
 // single numbers
-long lvalue = coder.decodeLong(coder.encodeLong(42L)); // = 42
-int ivalue = coder.decodeInt(coder.encodeInt(13)); // = 13
+long lvalue = coder.decodeLong(coder.encodeLong(42L));        // = 42
+int ivalue = coder.decodeInt(coder.encodeInt(13));            // = 13
 double dvalue = coder.decodeDouble(coder.encodeDouble(0.5d)); // = 0.5
-float fvalue = coder.decodeFloat(coder.encodeFloat(33.3f)); // = 33.3
+float fvalue = coder.decodeFloat(coder.encodeFloat(33.3f));   // = 33.3
 
 // multiple numbers
-long[] lvalues = coder.decodeLongs(coder.encodeLongs(1L,2L)); // = [1,2]
-int[] ivalues = coder.decodeInts(coder.encodeInts(3,6,9)); // = [3,6,9]
+long[] lvalues = coder.decodeLongs(coder.encodeLongs(1L,2L));              // = [1,2]
+int[] ivalues = coder.decodeInts(coder.encodeInts(3,6,9));                 // = [3,6,9]
 double[] dvalues = coder.decodeDoubles(coder.encodeDoubles(0.5d,55.789d)); // = [0.5,55.789]
 
 // (enum) names (upper letters and _ only)
 String name = coder.decodeName(coder.encodeName("RUNTIME")); // = "RUNTIME" 
+
+// any text
+String text = coder.decodeText(coder.encodeText("🥳"));      // = "🥳"
 ```
+
+When constructing a `Coder` instance the secret can be passed explicitly or when omitted the
+`lusid.secret` system property or environment variable is used. Default mode is `Mode.MIXED`.
+
+```java
+// explicit custom secret property
+System.setProperty("my.secret.property", "42");
+Coder c1 = Coder.of("my.secret.property", 1);   // minimum length 1, mode MIXED
+
+// explicit secret value, explicit mode
+Coder c2 = Coder.of(42L, 2, Mode.UPPER);        // minimum length 2, mode UPPER
+
+// implicit secret from lusid.secret
+Coder c3 = Coder.of(3);                         // minimum length 3, mode MIXED
+```
+
 
 ## 🔠 Modes
 Five standard modes are included:
@@ -104,6 +123,11 @@ most impossible to extract this way as any combination results in a
 set of small numbers if the original set was indeed a set of small numbers.
 
 ## ⏱️ Performance
+
+> [!Tip]
+> **TLDR;** The takeaway here is encoding and decoding is very cheap.  
+> It literally can be done millions of times per second on any HW around.
+
 Some rough numbers for encoding and decoding all values between 
 -1 million and +1 million with a minimal length of 8 in `MIXED` mode.
 This means padding was used all the time (worst case scenario; 

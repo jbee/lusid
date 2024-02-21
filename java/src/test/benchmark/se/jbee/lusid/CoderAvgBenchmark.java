@@ -21,7 +21,7 @@ import org.openjdk.jmh.infra.Blackhole;
  * @author Christian Stein
  */
 @Fork(value = 1, warmups = 1)
-@Warmup(iterations = 2, time = 1)
+@Warmup(iterations = 2, time = 3)
 @Measurement(
     iterations = 3,
     time = CoderAvgBenchmark.LOOP_COUNT / 100,
