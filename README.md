@@ -106,7 +106,7 @@ The below table demonstrates IDs using the different `Mode`s with minimum length
 > Both the secret and original values must stay "unknown" to maintain information hiding.
 
 This is not a typical "encryption" library. 
-Meaning the algorithm is easily reversible.
+Meaning, the algorithm is easily reversible.
 The information is hidden and disclosed using a simple XOR with a 64 bit secret.
 This might appear awfully simplistic, however, as long as an attacker 
 does not know the secret or any original value together with its corresponding 
@@ -119,8 +119,14 @@ This means a brute force attack is fairly meaningless.
 It maybe can be used to find some bits of the secret 
 based assumptions like - "most original numbers are small positive numbers" -
 but the lower bits of the secret (which are used most) are also 
-most impossible to extract this way as any combination results in a
-set of small numbers if the original set was indeed a set of small numbers.
+most impossible to extract this way as any secret results in a
+set of small numbers (if the original set was indeed a set of small numbers)
+but the numbers are only the correct ones with the correct secret.
+
+It is also not possible to tell from the ID what type of value 
+(`long`, `int`, `float`, `double`, `String`) it has been generated from.
+When the `Mode` is known one could only tell if an ID contains one or more values.
+
 
 ## ⏱️ Performance
 
