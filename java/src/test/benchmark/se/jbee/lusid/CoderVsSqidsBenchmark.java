@@ -44,6 +44,12 @@ public class CoderVsSqidsBenchmark {
 
   @Benchmark
   @OperationsPerInvocation(LOOP_COUNT)
+  public void parseLongToString(Blackhole bh) {
+    for (int i = 0; i < LOOP_COUNT; i++) bh.consume(Long.parseLong(String.valueOf((long)i)));
+  }
+
+  @Benchmark
+  @OperationsPerInvocation(LOOP_COUNT)
   public void recodeLongLusid8(Blackhole bh) {
     for (int i = 0; i < LOOP_COUNT; i++) bh.consume(MIXED_8.decodeLong(MIXED_8.encodeLong(i)));
   }
