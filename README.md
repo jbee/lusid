@@ -161,6 +161,19 @@ The algorithm is build for `long` so it is expected to do best (for same length)
 `double` also does worse since it does need 20 characters most of the time.
 Very large long values will move towards the double score but never quit get as high (slow).
 
+In comparison to the popular [Squids](https://github.com/sqids/sqids-java) library _Lusid_
+is almost 2 orders of magnitude faster. For variable length IDs it is around 64 times faster,
+for minimum length 8 IDs it is around 72 times faster. 
+Again, not measured under ideal conditions but the picture is pretty clear. 
+```
+Benchmark                               Mode  Cnt      Score     Error  Units
+CoderVsSqidsBenchmark.recodeLongLusid   avgt    3    128.457 ±   3.356  ns/op
+CoderVsSqidsBenchmark.recodeLongSqids   avgt    3   8199.822 ± 395.992  ns/op
+
+CoderVsSqidsBenchmark.recodeLongLusid8  avgt    3    174.865 ±  14.733  ns/op
+CoderVsSqidsBenchmark.recodeLongSqids8  avgt    3  12689.196 ±  13.887  ns/op
+```
+
 ## 🧮 Algorithm
 The algorithm works on bit level using `long`s. 
 The 64bits of a `long` value are split in high `int` and low `int` value
